@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+
+{% block title %}Authority Dashboard - LocalLens{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        border-radius: 12px;
+        padding: 1.5rem;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .metric-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .table-action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* CSS Pie Chart Styles */
+    .chart-container {
+        position: relative;
+        padding: 30px 20px;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .css-pie-chart {
+        position: relative;
+        width: 350px;
+        height: 350px;
+        border-radius: 50%;
+        background: conic-gradient(
+            from 0deg,
+            var(--slice-colors)
+        );
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* Individual pie slice colors - will be set via inline styles */
+    .pie-slice-0 { --color: #2563eb; }
+    .pie-slice-1 { --color: #f59e0b; }
+    .pie-slice-2 { --color: #ef4444; }
+    .pie-slice-3 { --color: #10b981; }
+    .pie-slice-4 { --color: #8b5cf6; }
+    .pie-slice-5 { --color: #ec4899; }
+    
+    /* Center circle for donut effect */
+    .pie-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 180px;
+        height: 180px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .pie-center-label {
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    
+    .pie-center-value {
+        font-size: 32px;
+        color: #111827;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+    
+    /* Legend */
+    .chart-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 30px;
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        background: #f9fafb;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .legend-item:hover {
+        background: #f3f4f6;
+        transform: translateX(5px);
+    }
+    
+    .legend-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+    
+    .legend-label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 500;
+    }
+    
+    .legend-value {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .legend-count {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+    }
+    
+    .legend-percentage {
+        font-size: 13px;
+        color: #6b7280;
+        background: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    
+    /* Print/Screenshot optimizations */
+    @media print {
+        .chart-container {
+            min-height: 600px;
+        }
+        
+        .css-pie-chart {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+        
+        .legend-item {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-1">Authority Dashboard</h2>
+            <p class="text-muted">Overview of civic issues in your jurisdiction</p>
+        </div>
+    </div>
+    
+    <!-- Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="metric-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Total Issues</p>
+                        <h3 class="mb-0">{{ total_issues }}</h3>
+                    </div>
+                    <div class="metric-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="metric-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Pending</p>
+                        <h3 class="mb-0">{{ pending }}</h3>
+                    </div>
+                    <div class="metric-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="metric-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">In Progress</p>
+                        <h3 class="mb-0">{{ in_progress }}</h3>
+                    </div>
+                    <div class="metric-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="metric-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1">Resolved</p>
+                        <h3 class="mb-0">{{ resolved }}</h3>
+                    </div>
+                    <div class="metric-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Issues by Category</h5>
+                    <div class="chart-container">
+                        {% if issues_by_category %}
+                        <div class="css-pie-chart" id="pieChart"></div>
+                        
+                        <div class="chart-legend">
+                            {% for cat in issues_by_category %}
+                            <div class="legend-item">
+                                <div class="legend-left">
+                                    <div class="legend-color pie-slice-{{ forloop.counter0 }}" 
+                                         style="background-color: var(--color);"></div>
+                                    <span class="legend-label">{{ cat.category__name }}</span>
+                                </div>
+                                <div class="legend-value">
+                                    <span class="legend-count">{{ cat.count }}</span>
+                                    <span class="legend-percentage">{{ cat.percentage|floatformat:1 }}%</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-center text-muted">No category data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Hot Spots</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Area</th>
+                                    <th>Issues</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for spot in hot_spots %}
+                                <tr>
+                                    <td>{{ spot.ward|default:"N/A" }} - {{ spot.zone|default:"N/A" }}</td>
+                                    <td><span class="badge bg-danger">{{ spot.count }}</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">No data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Issues Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">Recent Issues</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary active" onclick="filterIssues('all')">All</button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="filterIssues('pending')">Pending</button>
+                            <button class="btn btn-sm btn-outline-info" onclick="filterIssues('in_progress')">In Progress</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Upvotes</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for issue in recent_issues %}
+                                <tr data-status="{{ issue.status }}">
+                                    <td>#{{ issue.id }}</td>
+                                    <td>
+                                        <a href="{% url 'issue_detail' issue.pk %}" class="text-decoration-none">
+                                            {{ issue.title|truncatewords:5 }}
+                                        </a>
+                                    </td>
+                                    <td>{{ issue.category.name }}</td>
+                                    <td>{{ issue.ward|default:"N/A" }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ issue.status }}">
+                                            {{ issue.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-thumbs-up text-primary me-1"></i>{{ issue.upvotes }}
+                                    </td>
+                                    <td>{{ issue.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'manage_issue' issue.pk %}" class="btn btn-sm btn-primary table-action-btn">
+                                            <i class="fas fa-cog"></i>
+                                        </a>
+                                        <a href="{% url 'issue_detail' issue.pk %}" class="btn btn-sm btn-outline-primary table-action-btn">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">No issues found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Create CSS Pie Chart using conic-gradient
+    window.addEventListener('load', function() {
+        const pieChart = document.getElementById('pieChart');
+        if (!pieChart) return;
+        
+        // Get data from Django template
+        const categories = [
+            {% for cat in issues_by_category %}
+            {
+                name: '{{ cat.category__name }}',
+                count: {{ cat.count }},
+                percentage: {{ cat.percentage|default:0 }},
+                color: getComputedStyle(document.querySelector('.pie-slice-{{ forloop.counter0 }}')).getPropertyValue('--color').trim()
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        if (categories.length === 0) return;
+        
+        // Calculate total
+        const total = categories.reduce((sum, cat) => sum + cat.count, 0);
+        
+        // Build conic-gradient
+        let gradientStops = [];
+        let currentAngle = 0;
+        
+        categories.forEach((cat, index) => {
+            const percentage = (cat.count / total) * 100;
+            const endAngle = currentAngle + (percentage * 3.6); // Convert to degrees
+            
+            gradientStops.push(`${cat.color} ${currentAngle}deg ${endAngle}deg`);
+            currentAngle = endAngle;
+        });
+        
+        // Apply gradient
+        pieChart.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+        
+        // Add center circle with total
+        const centerDiv = document.createElement('div');
+        centerDiv.className = 'pie-center';
+        centerDiv.innerHTML = `
+            <span class="pie-center-label">Total Issues</span>
+            <span class="pie-center-value">${total}</span>
+        `;
+        pieChart.appendChild(centerDiv);
+    });
+    
+    // Filter issues
+    function filterIssues(status) {
+        const rows = document.querySelectorAll('tbody tr[data-status]');
+        const buttons = document.querySelectorAll('.btn-group button');
+        
+        // Update active button
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Filter rows
+        rows.forEach(row => {
+            if (status === 'all' || row.dataset.status === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

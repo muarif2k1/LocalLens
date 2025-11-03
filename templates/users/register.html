@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register - LocalLens{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                        <h3>Create Account</h3>
+                        <p class="text-muted">Join LocalLens and make your community better</p>
+                    </div>
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                Username <span class="text-danger">*</span>
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.username.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">Required. 150 characters or fewer.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                Email Address <span class="text-danger">*</span>
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.email.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                Phone Number
+                            </label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.phone_number.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.ward.id_for_label }}" class="form-label">
+                                    Ward
+                                </label>
+                                {{ form.ward }}
+                                {% if form.ward.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.ward.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.zone.id_for_label }}" class="form-label">
+                                    Zone
+                                </label>
+                                {{ form.zone }}
+                                {% if form.zone.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.zone.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.user_type.id_for_label }}" class="form-label">
+                                User Type <span class="text-danger">*</span>
+                            </label>
+                            {{ form.user_type }}
+                            {% if form.user_type.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.user_type.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted d-block mt-1">
+                                Choose "Authority" only if you are a government official
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                Password <span class="text-danger">*</span>
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.password1.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted d-block mt-1">
+                                Password must be at least 8 characters long
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                Confirm Password <span class="text-danger">*</span>
+                            </label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.password2.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> 
+                                and <a href="#" class="text-decoration-none">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account? 
+                            <a href="{% url 'login' %}" class="text-decoration-none fw-bold">Login</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add form field classes
+    document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], select').forEach(el => {
+        el.classList.add('form-control');
+    });
+</script>
+{% endblock %}

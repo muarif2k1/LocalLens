@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Issue Map - LocalLens{% endblock %}
+
+{% block extra_css %}
+<style>
+    #issueMap {
+        height: 700px;
+    }
+    
+    .filter-panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .leaflet-popup-content {
+        min-width: 250px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="filter-panel">
+                <h4 class="mb-3">
+                    <i class="fas fa-filter me-2"></i>Filters
+                </h4>
+                <form method="get">
+                    {{ filter_form.as_p }}
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'issue_map' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-redo me-2"></i>Reset
+                    </a>
+                </form>
+            </div>
+            
+            <div class="filter-panel">
+                <h5 class="mb-3">Legend</h5>
+                <div class="mb-2">
+                    <span class="badge bg-warning text-dark">●</span> Pending
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-info">●</span> In Progress
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-success">●</span> Resolved
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="map-container">
+                <div id="issueMap"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const map = L.map('issueMap').setView([20.5937, 78.9629], 5);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    const statusColors = {
+        'pending': '#fbbf24',
+        'in_progress': '#3b82f6',
+        'resolved': '#10b981',
+        'closed': '#6b7280',
+        'duplicate': '#ef4444'
+    };
+
+    const issues = {{ issues_json|safe }};
+    
+    issues.forEach(issue => {
+        // Validate coordinates
+        if (issue.lat === null || issue.lng === null) {
+            console.warn("Skipping issue without coordinates:", issue.title);
+            return;
+        }
+
+        // Create marker
+        const marker = L.circleMarker([issue.lat, issue.lng], {
+            radius: 8,
+            fillColor: statusColors[issue.status] || '#3388ff',
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+
+        // Build popup content
+        const popupContent = `
+            <div style="max-width: 220px;">
+                <h6 class="mb-1">${issue.title}</h6>
+                <span class="badge bg-${getStatusBadgeClass(issue.status)}">
+                    ${issue.status.replace('_', ' ')}
+                </span>
+                <p class="mt-2 mb-2 small text-muted">
+                    ${issue.description ? issue.description.substring(0, 100) + '...' : ''}
+                </p>
+                <small class="text-muted">
+                    <i class="fas fa-thumbs-up me-1"></i>${issue.upvote_count || 0}
+                </small><br>
+                <a href="/issue/${issue.id}/" class="btn btn-sm btn-primary mt-2" style="color: white !important;">
+                    View Details
+                </a>
+            </div>
+        `;
+
+        marker.bindPopup(popupContent);
+    });
+
+
+    function getStatusBadgeClass(status) {
+        const classes = {
+            'pending': 'warning',
+            'in_progress': 'info',
+            'resolved': 'success',
+            'closed': 'secondary',
+            'duplicate': 'danger'
+        };
+        return classes[status] || 'secondary';
+    }
+    
+    // Fit map to markers
+    if (issues.length > 0) {
+        const group = new L.featureGroup(
+            issues.map(i => L.marker([i.lat, i.lng]))
+        );
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+</script>
+{% endblock %}

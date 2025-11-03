@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - LocalLens{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-map-marked-alt fa-3x text-primary mb-3"></i>
+                        <h3>Welcome Back</h3>
+                        <p class="text-muted">Login to report and track civic issues</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" name="username" id="username" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" name="password" id="password" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember">
+                            <label class="form-check-label" for="remember">Remember me</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                        
+                        <div class="text-center">
+                            <a href="{% url 'password_reset' %}" class="text-decoration-none">
+                                Forgot Password?
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Don't have an account? 
+                            <a href="{% url 'register' %}" class="text-decoration-none fw-bold">Register</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

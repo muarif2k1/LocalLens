@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - {{ user.username }} - LocalLens{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Profile Sidebar -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 120px; height: 120px; font-size: 3rem;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    
+                    <h4 class="mb-1">{{ user.username }}</h4>
+                    <span class="badge bg-primary mb-3">{{ user.get_user_type_display }}</span>
+                    
+                    <div class="text-start mt-4">
+                        <p class="mb-2">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <strong>Email:</strong> {{ user.email }}
+                        </p>
+                        
+                        {% if user.phone_number %}
+                        <p class="mb-2">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <strong>Phone:</strong> {{ user.phone_number }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if user.ward %}
+                        <p class="mb-2">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                            <strong>Ward:</strong> {{ user.ward }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if user.zone %}
+                        <p class="mb-2">
+                            <i class="fas fa-map-pin text-primary me-2"></i>
+                            <strong>Zone:</strong> {{ user.zone }}
+                        </p>
+                        {% endif %}
+                        
+                        <p class="mb-2">
+                            <i class="fas fa-calendar text-primary me-2"></i>
+                            <strong>Joined:</strong> {{ user.date_joined|date:"M d, Y" }}
+                        </p>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'profile_edit' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notification Settings -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-bell me-2"></i>Notifications
+                    </h5>
+                    
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="emailNotif" 
+                               {% if user.email_notifications %}checked{% endif %}>
+                        <label class="form-check-label" for="emailNotif">
+                            Email Notifications
+                        </label>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="smsNotif"
+                               {% if user.sms_notifications %}checked{% endif %}>
+                        <label class="form-check-label" for="smsNotif">
+                            SMS Notifications
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <i class="fas fa-exclamation-circle fa-2x text-primary mb-2"></i>
+                            <h3 class="mb-0">{{ reported_issues.count }}</h3>
+                            <small class="text-muted">Issues Reported</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <i class="fas fa-thumbs-up fa-2x text-success mb-2"></i>
+                            <h3 class="mb-0">{{ upvoted_issues.count }}</h3>
+                            <small class="text-muted">Issues Upvoted</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <i class="fas fa-comments fa-2x text-info mb-2"></i>
+                            <h3 class="mb-0">{{ user.issuecomment_set.count }}</h3>
+                            <small class="text-muted">Comments Made</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="reported-tab" data-bs-toggle="tab" 
+                            data-bs-target="#reported" type="button">
+                        <i class="fas fa-file-alt me-1"></i>Reported Issues
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="upvoted-tab" data-bs-toggle="tab" 
+                            data-bs-target="#upvoted" type="button">
+                        <i class="fas fa-thumbs-up me-1"></i>Upvoted
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="activity-tab" data-bs-toggle="tab" 
+                            data-bs-target="#activity" type="button">
+                        <i class="fas fa-history me-1"></i>Activity
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Reported Issues Tab -->
+                <div class="tab-pane fade show active" id="reported" role="tabpanel">
+                    {% if reported_issues %}
+                        {% for issue in reported_issues %}
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <img src="{{ issue.image.url }}" alt="{{ issue.title }}" 
+                                             class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;">
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 class="mb-2">{{ issue.title }}</h5>
+                                                <span class="status-badge status-{{ issue.status }} me-2">
+                                                    {{ issue.get_status_display }}
+                                                </span>
+                                                <span class="badge bg-secondary">{{ issue.category.name }}</span>
+                                            </div>
+                                            <small class="text-muted">{{ issue.created_at|timesince }} ago</small>
+                                        </div>
+                                        
+                                        <p class="text-muted mt-2 mb-2">{{ issue.description|truncatewords:20 }}</p>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-thumbs-up me-1"></i>{{ issue.upvotes }}
+                                                <i class="fas fa-comment ms-3 me-1"></i>{{ issue.comments.count }}
+                                            </small>
+                                            <a href="{% url 'issue_detail' issue.pk %}" class="btn btn-sm btn-primary">
+                                                View Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if reported_issues.count > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'my_issues' %}" class="btn btn-outline-primary">
+                                View All Issues
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">You haven't reported any issues yet.</p>
+                            <a href="{% url 'report_issue' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i>Report Your First Issue
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Upvoted Issues Tab -->
+                <div class="tab-pane fade" id="upvoted" role="tabpanel">
+                    {% if upvoted_issues %}
+                        {% for issue in upvoted_issues %}
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-2">{{ issue.title }}</h5>
+                                        <span class="badge bg-secondary">{{ issue.category.name }}</span>
+                                        <span class="status-badge status-{{ issue.status }} ms-2">
+                                            {{ issue.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <a href="{% url 'issue_detail' issue.pk %}" class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </div>
+                                <p class="text-muted mt-2 mb-0">{{ issue.description|truncatewords:15 }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-thumbs-up fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">You haven't upvoted any issues yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Activity Tab -->
+                <div class="tab-pane fade" id="activity" role="tabpanel">
+                    <div class="timeline">
+                        {% for comment in user.issuecomment_set.all|slice:":10" %}
+                        <div class="card shadow-sm border-0 mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        <i class="fas fa-comment me-1"></i>Commented on 
+                                        <a href="{% url 'issue_detail' comment.issue.pk %}">{{ comment.issue.title }}</a>
+                                    </small>
+                                    <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                                </div>
+                                <p class="mt-2 mb-0">{{ comment.comment }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No recent activity.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle notification settings
+    $('#emailNotif, #smsNotif').change(function() {
+        const setting = $(this).attr('id');
+        const value = $(this).is(':checked');
+        
+        $.ajax({
+            url: '{% url "update_notification_settings" %}',
+            method: 'POST',
+            data: {
+                setting: setting,
+                value: value,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                console.log('Notification settings updated');
+            }
+        });
+    });
+</script>
+{% endblock %}
